@@ -40,7 +40,7 @@ class PostRepositoryImpl: PostRepository {
         if (post.likedByMe) {
 
             val request: Request = Request.Builder()
-                .post(EMPTY_REQUEST)
+                .delete(EMPTY_REQUEST)
                 .url("${BASE_URL}/api/posts/${post.id}/likes")
                 .build()
 
@@ -49,7 +49,7 @@ class PostRepositoryImpl: PostRepository {
         } else {
 
             val request: Request = Request.Builder()
-                .delete(EMPTY_REQUEST)
+                .post(EMPTY_REQUEST)
                 .url("${BASE_URL}/api/posts/${post.id}/likes")
                 .build()
 
