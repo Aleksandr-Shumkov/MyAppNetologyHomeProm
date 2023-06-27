@@ -53,9 +53,23 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun save() {
         edited.value?.let {
 
-            repository.saveAsync(it, object : PostRepository.GetCallback<Unit> {
-                override fun onSuccess(value: Unit) {
-                    _postCreated.postValue(Unit)
+            repository.saveAsync(it, object : PostRepository.GetCallback<Post> {
+                override fun onSuccess(value: Post) {
+                    if (value.id == 0L) {
+                        _data.postValue(FeedModel(posts = listOf(value) + _data.value?.posts.orEmpty(), empty = listOf(value).isEmpty()))
+                    } else {
+                        _data.postValue(_data.value?.copy(posts = _data.value?.posts.orEmpty().map {post ->
+                            if (post.id == value.id) {
+                                post.copy(
+                                    content = value.content
+                                )
+                            } else {
+                                post
+                            }
+                        }
+
+                        ))
+                    }
                 }
 
                 override fun onError() {
@@ -81,14 +95,14 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun likeById(post: Post) {
 
-        repository.likeByIdAsync(post, (object : PostRepository.GetCallback<Unit> {
+        repository.likeByIdAsync(post, (object : PostRepository.GetCallback<Post> {
 
-            override fun onSuccess(value: Unit) {
+            override fun onSuccess(value: Post) {
                 _data.postValue(_data.value?.copy(posts = _data.value?.posts.orEmpty().map {
                     if (it.id == post.id) {
                         post.copy(
-                            likes = if (post.likedByMe) post.likes - 1 else post.likes + 1,
-                            likedByMe = !post.likedByMe
+                            likes = value.likes,
+                            likedByMe = value.likedByMe
                         )
                     } else {
                         it

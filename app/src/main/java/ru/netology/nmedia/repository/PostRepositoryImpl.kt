@@ -53,7 +53,7 @@ class PostRepositoryImpl: PostRepository {
     }
 
 
-    override fun likeByIdAsync(post: Post, callback: PostRepository.GetCallback<Unit>) {
+    override fun likeByIdAsync(post: Post, callback: PostRepository.GetCallback<Post>): Post {
         if (post.likedByMe) {
 
             val request: Request = Request.Builder()
@@ -61,7 +61,7 @@ class PostRepositoryImpl: PostRepository {
                 .url("${BASE_URL}/api/posts/${post.id}/likes")
                 .build()
 
-            refreshLike(request, callback)
+            return refreshLike(request, callback)
 
         } else {
 
@@ -70,12 +70,12 @@ class PostRepositoryImpl: PostRepository {
                 .url("${BASE_URL}/api/posts/${post.id}/likes")
                 .build()
 
-            refreshLike(request, callback)
+            return refreshLike(request, callback)
 
         }
     }
 
-    private fun refreshLike(request: Request, callback: PostRepository.GetCallback<Unit>) {
+    private fun refreshLike(request: Request, callback: PostRepository.GetCallback<Post>): Post {
 
         client.newCall(request)
             .enqueue(object : Callback{
@@ -83,8 +83,7 @@ class PostRepositoryImpl: PostRepository {
                 override fun onResponse(call: Call, response: Response) {
                     try {
                         val body = response.body?.string() ?: throw RuntimeException("body is null")
-                        //return
-                        callback.onSuccess(Unit)
+                        return callback.onSuccess(gson.fromJson(body, Post::class.java))
                     } catch (e: Exception) {
                         callback.onError()
                     }
@@ -96,9 +95,10 @@ class PostRepositoryImpl: PostRepository {
 
             })
 
+        return Post(0, "", "", "", false)
     }
 
-    override fun saveAsync(post: Post, callback: PostRepository.GetCallback<Unit>) {
+    override fun saveAsync(post: Post, callback: PostRepository.GetCallback<Post>): Post {
 
         val request: Request = Request.Builder()
             .post(gson.toJson(post).toRequestBody(jsonType))
@@ -110,7 +110,8 @@ class PostRepositoryImpl: PostRepository {
 
                 override fun onResponse(call: Call, response: Response) {
                     try {
-                        callback.onSuccess(Unit)
+                        val body = response.body?.string() ?: throw RuntimeException("body is null")
+                        return callback.onSuccess(gson.fromJson(body, Post::class.java))
                     } catch (e: Exception) {
                         callback.onError()
                     }
@@ -121,6 +122,8 @@ class PostRepositoryImpl: PostRepository {
                 }
 
             })
+
+        return Post(0, "", "", "", false)
     }
 
     override fun removeByIdAsync(id: Long, callback: PostRepository.GetCallback<Unit>) {
